@@ -1,4 +1,5 @@
-rand = {mySeed = 1, lastN = -1}
+rand = { mySeed = 1, lastN = -1 }
+
 function rand:get(seed, n)
   if n <= 0 then n = -2 * n
   else n = 2 * n - 1
@@ -170,11 +171,11 @@ end
 
 local ansicolors = require 'ansicolors'
 
-local seed = 1357
-local height = 250
-local width = 250
+local seed = 101010101
+local height = 1000
+local width = 1000
 local N = 50
-local persistance = 7
+local persistance = 9
 local amplitude = 1
 
 local map, min, max = perlin2D(seed, height, width, N, persistance, amplitude)
@@ -216,41 +217,27 @@ function terminalMap()
 end
 
 function htmlMap()
-  local val = 0
+  local file = io.open("world.js", "w")
+  local mapIndex, y, x, i, height, val
   local normal = 16
-  local squarepx = 5
-  local file = io.open("world.html", "w")
-  local bheight = height * squarepx
-  local bwidth = height * squarepx
 
-  file:write('<style>')
-  file:write(string.format('\tbody { font-size: 0px; height: %dpx; width: %dpx }', bheight, bwidth))
-  file:write(string.format('\t.cell { height: %dpx; width: %dpx; display: inline-block;}', squarepx, squarepx))
+  file:write(string.format('window.min = %d;', min))
+  file:write(string.format('window.max = %d;', max))
+  file:write('window.heightmap = [\n')
 
-  local colorLoop = 0
-  local color = ''
+  for mapIndex, y in pairs(map) do
+    file:write('\n  [')
 
-  while colorLoop < normal do
-    file:write(string.format('\t.height-%d { background: #%x%x%x }\n', colorLoop, colorLoop, colorLoop, colorLoop))
-    colorLoop = colorLoop + 1
-  end
-
-  file:write('</style>')
-  file:flush()
-
-  for _, y in pairs(map) do
-    local html = {}
-    table.insert(html, '<div class="row">')
-
-    for _, height in pairs(y) do
-      val = lookup(min, max, height, normal, 1) - 1 -- normalize to 0 for css classes
-      table.insert(html, string.format('\t<div class="cell height-%d"></div>', val))
+    for i, height in pairs(y) do
+      local val = lookup(min, max, height, normal, 1)
+      file:write(val .. ',')
     end
 
-    table.insert(html, '</div>')
-    file:write(table.concat(html, '\n'))
+    file:write('  ],')
     file:flush()
   end
+
+  file:write('];')
 
   file:close()
 end
